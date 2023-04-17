@@ -1,8 +1,5 @@
 # -*- coding: utf-8 -*-
-# @Author: jarvis.zhang, yangazure
-# @Date:   2020-05-08 18:46:52
-# @Last Modified by:   jarvis.zhang
-# @Last Modified time: 2020-05-10 00:51:05
+# Adapted by Yang Shi from jarvis.zhang
 import numpy as np
 import itertools
 import pandas as pd
@@ -128,34 +125,20 @@ class DataReader():
                 ques = [int(q) for q in ques.strip().strip(',').split(',')]
                 ans = [int(a) for a in ans.strip().strip(',').split(',')]
                 css = [cs for cs in css.strip().strip(',').split(',')]
-#                 slices = len//self.maxstep + (1 if len % self.maxstep > 0 else 0)
-                
-#                 # Features reading
-#                 F_elif = [int(f) for f in F_elif.strip().strip(',').split(',')]
-#                 F_and = [int(f) for f in F_and.strip().strip(',').split(',')]
-#                 F_or = [int(f) for f in F_or.strip().strip(',').split(',')]
-#                 F_return = [int(f) for f in F_return.strip().strip(',').split(',')]
-#                 F_nested = [int(f) for f in F_nested.strip().strip(',').split(',')]
-#                 F_while = [int(f) for f in F_while.strip().strip(',').split(',')]
-#                 F_wrong_bracket = [int(f) for f in F_wrong_bracket.strip().strip(',').split(',')]
-#                 F_plusminus = [int(f) for f in F_plusminus.strip().strip(',').split(',')]
-#                 F_print = [int(f) for f in F_print.strip().strip(',').split(',')]
-
-#                 temp = np.zeros(shape=[self.maxstep, 4 * self.numofques]) # Skill DKT #2, Skill-Code DKT
                 temp = np.zeros(shape=[self.maxstep, 2 * self.numofques+MAX_CODE_LEN*3]) # Skill DKT #1, original
                 if lent >= self.maxstep:
                     steps = self.maxstep
                     extra = 0
-                    #features_0 = features_0[-steps:]
+
                     ques = ques[-steps:]
                     ans = ans[-steps:]
                     css = css[-steps:]
                 else:
                     steps = lent
                     extra = self.maxstep-steps
-                    #features_0 = [0]*extra+features_0
 
-                # Skill DKT #1
+
+
                 css_list_student = []
                 for j in range(steps):
                     if ans[j] == 1:
@@ -179,85 +162,7 @@ class DataReader():
                         
 
                         temp[j+extra][2*self.numofques:] = features
-                        
-#                         print(temp.shape)
-#                 if ans[-1] == 1:
-#                     temp[steps-1+extra][0] = 1
-#                 else:
-#                     temp[steps-1+extra][0] = 0  
-
-
-#                 # Skill DKT #2
-#                 for j in range(steps):
-#                     if ans[j] == 1:
-#                         temp[j+extra][ques[j]] = 1
-#                         for skill in skill_dict[ques[j]]:
-#                             temp[j+extra][skill + 2*self.numofques] = 1
-#                     else:
-#                         temp[j+extra][ques[j] + self.numofques] = 1
-#                         for skill in skill_dict[ques[j]]:
-#                             temp[j+extra][skill + 3*self.numofques] = 1
-                            
-#                 # Original DKT
-#                 for j in range(steps):
-#                     if ans[j] == 1:
-#                         temp[j+extra][ques[j]] = 1
-
-#                     else:
-#                         temp[j+extra][ques[j] + self.numofques] = 1
-
-#                 # Skill-Code DKT
-#                 for j in range(steps-1):
-#                     if ans[j] == 1:
-#                         for skill in skill_dict[ques[j]]:
-#                             temp[j+extra][skill] = 1
-#                     else:
-#                         for skill in skill_dict[ques[j]]:
-#                             temp[j+extra][skill + self.numofques] = 1
-#                     if F_elif[j] == 1:
-#                         temp[j+extra][0+2*self.numofques] = 1
-#                     else:
-#                         temp[j+extra][0+3*self.numofques] = 1
-#                     if F_and[j] == 1:
-#                         temp[j+extra][1+2*self.numofques] = 1
-#                     else:
-#                         temp[j+extra][1+3*self.numofques] = 1
-#                     if F_or[j] == 1:
-#                         temp[j+extra][2+2*self.numofques] = 1
-#                     else:
-#                         temp[j+extra][2+3*self.numofques] = 1
-#                     if F_return[j] == 1:
-#                         temp[j+extra][3+2*self.numofques] = 1
-#                     else:
-#                         temp[j+extra][3+3*self.numofques] = 1
-#                     if F_nested[j] == 1:
-#                         temp[j+extra][4+2*self.numofques] = 1
-#                     else:
-#                         temp[j+extra][4+3*self.numofques] = 1
-#                     if F_while[j] == 1:
-#                         temp[j+extra][5+2*self.numofques] = 1
-#                     else:
-#                         temp[j+extra][5+3*self.numofques] = 1
-#                     if F_wrong_bracket[j] == 1:
-#                         temp[j+extra][6+2*self.numofques] = 1
-#                     else:
-#                         temp[j+extra][6+3*self.numofques] = 1
-#                     if F_plusminus[j] == 1:
-#                         temp[j+extra][7+2*self.numofques] = 1
-#                     else:
-#                         temp[j+extra][7+3*self.numofques] = 1 
-#                     if F_print[j] == 1:
-#                         temp[j+extra][8+2*self.numofques] = 1
-#                     else:
-#                         temp[j+extra][8+3*self.numofques] = 1 
-                        
-                        
-#                 if ans[-1] == 1:
-#                     temp[steps-1+extra][0] = 1
-#                 else:
-#                     temp[steps-1+extra][0] = 0  
-
-#                 temp = np.hstack((temp,np.expand_dims(features_0, axis=1)))   
+                         
                 data.append(temp.tolist())
                 css_list.append(css_list_student)
                 
@@ -267,11 +172,11 @@ class DataReader():
     def getTrainData(self):
         print('loading train data...')
         trainData, css_list = self.getData(self.train_path)
-#         testData = self.getData(self.test_path)
+
         return np.array(trainData)
 
     def getTestData(self):
         print('loading test data...')
-#         trainData = self.getData(self.train_path)
+
         testData, css_list = self.getData(self.test_path)
         return np.array(testData), css_list
