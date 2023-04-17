@@ -1,8 +1,5 @@
 # -*- coding: utf-8 -*-
-# @Author: jarvis.zhang
-# @Date:   2020-05-09 21:50:46
-# @Last Modified by:   jarvis.zhang
-# @Last Modified time: 2020-05-10 13:20:09
+# Adapted by Yang Shi from jarvis.zhang
 """
 Usage:
     run.py (rnn|sakt) --hidden=<h> [options]
@@ -113,18 +110,16 @@ def main():
         print("----",fold,"-th run----")
         trainLoader, testLoade = getDataLoader(bs, questions, length, fold)
         node_count, path_count = np.load("np_counts.npy")
-#         print(node_count, path_count)
-        model = c2vRNNModel(questions * 2, hidden, layers, questions, node_count, path_count, questions, device) # Skill DKT #1, original
-#         model = RNNModel(questions * 4, hidden, layers, questions, device) # Skill DKT #2, Skill-Code DKT
-        
-#         model = SAKTModel(heads, length-1, hidden, questions, dropout, device)
+
+        model = c2vRNNModel(questions * 2, hidden, layers, questions, node_count, path_count, questions, device) 
+
         optimizer = optim.Adam(model.parameters(), lr=lr)
         loss_func = eval.lossFunc(questions, length, bs, device)
         for epoch in range(epochs):
             print('epoch: ' + str(epoch))
             train_loss, model, optimizer = eval.train_epoch(model, trainLoader, optimizer,
                                               loss_func, device)
-            # logger.info(f'epoch {epoch}')
+
             val_loss, (first_total_scores, first_scores, scores, performance) = eval.test_epoch(model, testLoade, loss_func, device, epoch, fold)
             
             print(train_loss, val_loss)

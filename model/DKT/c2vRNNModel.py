@@ -1,8 +1,5 @@
 # -*- coding: utf-8 -*-
-# @Author: jarvis.zhang
-# @Date:   2020-05-10 00:29:34
-# @Last Modified by:   jarvis.zhang
-# @Last Modified time: 2020-05-10 13:14:50
+# Adapted by Yang Shi from jarvis.zhang
 import torch
 import torch.nn as nn
 MAX_CODE_LEN = 100
@@ -17,7 +14,7 @@ class c2vRNNModel(nn.Module):
         self.embed_dropout = nn.Dropout(0.2)
         self.path_transformation_layer = nn.Linear(300,300)
         self.attention_layer = nn.Linear(300,1)
-#         self.feature_layer = nn.Linear(300,10)
+
         self.prediction_layer = nn.Linear(300,1)
         self.attention_softmax = nn.Softmax(dim=1)
 
@@ -33,13 +30,11 @@ class c2vRNNModel(nn.Module):
                           self.output_dim,
                           layer_dim,
                           batch_first=True)
-#         self.fc = nn.Linear(self.hidden_dim, self.output_dim)
-#         self.fc2 = nn.Linear(self.hidden_dim, self.skill_n)
+
         self.fc_skill = nn.Linear(300, self.skill_n)
         self.fc_pred = nn.Linear(self.skill_n, self.output_dim)
         self.kc_selecting_fc = nn.Linear(questions, self.skill_n)
         self.kc_selecting_fc.weight.data = self.kc_selecting_fc.weight.data+0.15
-#         self.kc_selecting_fc = nn.Linear(2*input_dim+300, self.skill_n)
         self.dropout = nn.Dropout(p=0.1)
         self.leakyReLU = nn.LeakyReLU()
         self.ReLU = nn.ReLU()
@@ -48,10 +43,8 @@ class c2vRNNModel(nn.Module):
         self.device = device
 
     def forward(self, x, evaluating=False):  # shape of input: [batch_size, length, questions * 2+c2vnodes]
-#         h0 = torch.zeros(self.layer_dim, x.size(0), self.hidden_dim, device=self.device)  # shape: [num_layers * num_directions, batch_size, hidden_size]
         
         rnn_first_part = x[:, :, :50] # (b,l,q)
-#         rnn_attention_part = torch.stack([rnn_first_part]*MAX_CODE_LEN,dim=-2) # (b,l,c,2q)
         
         print(rnn_first_part.shape, x.shape)
 
@@ -73,24 +66,13 @@ class c2vRNNModel(nn.Module):
         context_weights = self.attention_layer(full_embed_transformed) # (b,l,c,1)
         attention_weights = self.attention_softmax(context_weights) # (b,l,c,1)
         code_vectors = torch.sum(torch.mul(full_embed,attention_weights),dim=2) # (b,l,2ne+pe+2q)
-#         rnn_input = torch.cat((rnn_first_part,code_vectors), dim=2)
         
         kc_selecting_mask = self.sig(self.kc_selecting_fc(rnn_first_part))
-#         kc_selecting_mask = self.sig(self.kc_selecting_fc(rnn_input))
-        
-#         print(rnn_input.shape)
+
         out = self.fc_skill(code_vectors)
-#         out, hn = self.rnn(rnn_input)  # shape of out: [batch_size, length, hidden_size]
-#         out, hn = self.rnn(x, h0)  # shape of out: [batch_size, length, hidden_size]
-#         res = self.sig(self.fc(self.dropout(out)))  # shape of res: [batch_size, length, question]
-#         res = self.sig(self.fc(out))  # shape of res: [batch_size, length, question]
-#         res2 = self.sig(self.fc2(out))  # shape of res: [batch_size, length, question]
-#         print(kc_selecting_mask)
-#         print(kc_selecting_mask.ge(0.5).float())
-#         res2 = res2 * self.ReLU(kc_selecting_mask-0.5)
+
         res2 = out * (kc_selecting_mask.ge(0.5).float())
-#         res2 = res2 * self.softmax(kc_selecting_mask)
-#         res = self.sig(self.fc3(res2))  # shape of res: [batch_size, length, question]
+
         out2 = self.fc_pred(res2)  # shape of res: [batch_size, length, question]
         res = self.sig(out2)
         return res, res2, kc_selecting_mask, attention_weights

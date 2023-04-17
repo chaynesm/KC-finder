@@ -1,8 +1,5 @@
 # -*- coding: utf-8 -*-
-# @Author: jarvis.zhang
-# @Date:   2020-05-09 13:42:11
-# @Last Modified by:   jarvis.zhang, yshi26
-# @Last Modified time: 2020-05-10 13:33:06
+# Adapted by Yang Shi from jarvis.zhang
 import tqdm
 import torch
 import logging
@@ -16,19 +13,6 @@ logger = logging.getLogger('main.eval')
 
 def performance_granular(batch, pred, ground_truth, prediction, epoch):
     
-    
-
-#     problem_dict = {"000001001":"1",
-#                     "110101011":"3",
-#                     "101101000":"5",
-#                     "000101001":"13",
-#                     "010101001":"232",
-#                     "100010000":"233",
-#                     "110101000":"234",
-#                     "000101000":"235",
-#                     "000000100":"236"
-#                    }
-    
     preds = {k:[] for k in range(50)}
     gts = {k:[] for k in range(50)}
     first_preds = {k:[] for k in range(50)}
@@ -38,17 +22,6 @@ def performance_granular(batch, pred, ground_truth, prediction, epoch):
 
     
     for s in range(pred.shape[0]):
-#         print(batch[s][1:])
-#         delta = (batch[s][1:, 0:50] + batch[s][1:, 50:100])
-#         temp = pred[s][:50-1].mm(delta.T)
-        
-#         index = torch.tensor([[i for i in range(50-1)]],
-#                              dtype=torch.long)
-        
-# #         print(batch.shape, delta.shape, pred.shape, temp.shape)
-        
-#         p = temp.gather(0, index)[0].detach().cpu().numpy()
-#         a = (((batch[s][:, 0:50] - batch[s][:, 50:100]).sum(1) + 1) // 2)[1:].detach().cpu().numpy()
         
         # Current problem as ground truth   
         delta = (batch[s][:, 0:50] + batch[s][:, 50:100])
@@ -57,7 +30,6 @@ def performance_granular(batch, pred, ground_truth, prediction, epoch):
         index = torch.tensor([[i for i in range(50)]],
                              dtype=torch.long)
         
-#         print(batch.shape, delta.shape, pred.shape, temp.shape)
         
         p = temp.gather(0, index)[0].detach().cpu().numpy()
         a = (((batch[s][:, 0:50] - batch[s][:, 50:100]).sum(1) + 1) // 2).detach().cpu().numpy()
@@ -69,7 +41,6 @@ def performance_granular(batch, pred, ground_truth, prediction, epoch):
                 delta = delta.detach().cpu().numpy()[i:]
                 break
         
-#         problems = [problem_dict["".join([str(int(i)) for i in sk])] for sk in delta]
         
         for i in range(len(p)):
             for j in range(50):
@@ -79,7 +50,6 @@ def performance_granular(batch, pred, ground_truth, prediction, epoch):
                     if i == 0 or delta[i-1,j] != 1:
                         first_preds[j].append(p[i])
                         first_gts[j].append(a[i])
-#     print(gts[6])
     first_total_gts = []
     first_total_preds = []
     for j in range(50):
@@ -92,9 +62,7 @@ def performance_granular(batch, pred, ground_truth, prediction, epoch):
         except ValueError:
             auc = 0.5
         scores[j]=[auc,f1,recall,precision,acc]
-#         print('problem '+str(j)+' auc: ' + str(auc) + ' f1: ' + str(f1) + ' recall: ' + str(recall) +
-#           ' precision: ' + str(precision) + ' acc: ' +
-#                 str(acc))
+
         
         
         first_f1 = metrics.f1_score(first_gts[j], np.where(np.array(first_preds[j])>0.5, 1, 0))
@@ -110,7 +78,6 @@ def performance_granular(batch, pred, ground_truth, prediction, epoch):
         first_total_preds.extend(first_preds[j])
         
         first_scores[j]=[first_auc,first_f1,first_recall,first_precision,first_acc]
-#         print('First prediction for problem '+str(j)+' auc: ' + str(first_auc) + ' f1: ' + str(first_f1) + ' recall: ' + str(first_recall) + ' precision: ' + str(first_precision) + ' acc: ' + str(first_acc))
     
     f1 = metrics.f1_score(ground_truth.detach().numpy(),
                           torch.where(prediction>0.5,torch.tensor(1), torch.tensor(0)).detach().numpy())
@@ -128,9 +95,7 @@ def performance_granular(batch, pred, ground_truth, prediction, epoch):
     logger.info('auc: ' + str(auc) + ' f1: ' + str(f1) + ' recall: ' +
                 str(recall) + ' precision: ' + str(precision) + ' acc: ' +
                 str(acc))
-#     print('auc: ' + str(auc) + ' f1: ' + str(f1) + ' recall: ' + str(recall) +
-#           ' precision: ' + str(precision) + ' acc: ' +
-#                 str(acc))
+
     
     
     
@@ -166,10 +131,6 @@ def plot_heatmap(batch, pred, fold, batch_n):
         
         a = (((batch[s][:, 0:10] - batch[s][:, 10:20]) + 1) // 2)[1:].detach().cpu().numpy()
         
-#         # Current problem as ground truth   
-#         delta = (batch[s][:, 0:10] + batch[s][:, 10:20]).detach().cpu().numpy()
-        
-#         a = (((batch[s][:, 0:10] - batch[s][:, 10:20]) + 1) // 2).detach().cpu().numpy()
         
         p = pred[s].detach().cpu().numpy()
 
@@ -185,20 +146,12 @@ def plot_heatmap(batch, pred, fold, batch_n):
         plt.figure(figsize=(15, 6), dpi=80)
     
         ax = sns.heatmap(p.T, annot=a.T, linewidth=0.5, vmin=0, vmax=1, cmap="Blues")
-#         for text, show_annot in zip(ax.texts, (element for row in delta.T for element in row)):
-#             text.set_visible(show_annot)
-#         ax.set_xticks(problems)
+
         plt.xticks(np.arange(len(problems))+0.5, problems, rotation=45)
         plt.yticks(np.arange(10)+0.5, ['234', '13', '232', '233', '5', '235', '236', '1', '3'], rotation=45)
         plt.xlabel("Attempting Problem")
         plt.ylabel("Problem")
-#         ax2 = ax.twiny()
-#         ax2.plot(np.arange(len(problems))+0.5, np.ones(len(problems)))
-#         ax2.set_xticks( ax.get_xticks() )
-#         ax2.set_xticks(np.arange(len(problems)-1)+0.5)
-#         ax2.set_xticklabels(np.arange(len(problems)))
-#         ax2.set_xlabel('Predicted Attempts')
-#         ax2.cla()
+
         
         plt.title("Heatmap for student "+str(s)+" fold "+str(fold))
         plt.tight_layout()
@@ -277,14 +230,6 @@ class lossFunc(nn.Module):
 
             delta = batch[student][:, 0:self.num_of_questions] + batch[
                 student][:, self.num_of_questions:100]  # shape: [length, questions]
-
-#             temp = pred[student][:self.max_step-1].mm(delta[1:].t())
-#             index = torch.tensor([[i for i in range(self.max_step-1)]],
-#                                  dtype=torch.long)
-#             p = temp.gather(0, index)[0]
-#             a = (((batch[student][:, 0:self.num_of_questions] -
-#                    batch[student][:, self.num_of_questions:100]).sum(1) + 1) //
-#                  2)[1:]
             
             # Current problem as ground truth       
             temp = pred[student][:self.max_step].mm(delta.t())
@@ -295,30 +240,17 @@ class lossFunc(nn.Module):
                    batch[student][:, self.num_of_questions:100]).sum(1) + 1) //
                  2)
             
-#             print(delta.shape)
-
-
-#             mask = torch.where(delta == 1, True, False)
             for i in range(len(p)):
                 if p[i] > 0:
                     p = p[i:]
                     a = a[i:]
                     break
 
-#             for i in range(len(p)):
-#                 if p[i][0] > 0:
-#                     p = p[i:]
-#                     a = a[i:]
-#                     break
-                    
-#             print(a.shape)
-#             print(p.shape)
+
             loss += self.crossEntropy(p, a)
             prediction = torch.cat([prediction, p])
             ground_truth = torch.cat([ground_truth, a])
-#             prediction = torch.cat([prediction, p])
-#             ground_truth = torch.cat([ground_truth, a])
-            # print(prediction)
+
         
         
         loss = loss/pred.shape[0]
@@ -327,7 +259,7 @@ class lossFunc(nn.Module):
         kc_mask = (torch.sum(kc_selecting_mask, dim=0)/pred.shape[0])
         kc_mask_norm = torch.norm(kc_mask, p=1)
         kc_mask = kc_mask.ge(0.5)
-#         print(kc_mask)
+
         lc_loss = 0
         lc_calc = {}
         for i in range(lc.shape[1]):
@@ -335,14 +267,14 @@ class lossFunc(nn.Module):
             
             if lc_component.shape[0]:
                 opportunities = lc_component.shape[0]
-#                 print(lc_component.shape)
+
                 fitting_lc = first_error_rate*np.arange(1,opportunities+1)**-learning_rate
 
                 lc_loss += self.MSE(torch.reshape(lc_component, (-1,)), torch.tensor(fitting_lc, dtype=torch.float).to(self.device))
                 lc_calc[i] = lc_component.detach().cpu().numpy()
-#         total_loss = prediction_weight*loss + (1-prediction_weight)*torch.sqrt(lc_loss) + 1e-5*kc_mask_norm
+
             total_loss = prediction_weight*loss + (1-prediction_weight)*torch.sqrt(lc_loss) + 1e-3*torch.norm(model.kc_selecting_fc.weight, p=1)
-#         total_loss = prediction_weight*loss + (1-prediction_weight)*torch.sqrt(lc_loss) # TODO: How to add a loss to make mask vectors different without having them all zero? What does a no-representing KC mean?
+
         
         return total_loss, lc_loss, prediction, ground_truth, pred_skill, kc_selecting_mask
     
@@ -382,7 +314,7 @@ def test_epoch(model, testLoader, loss_func, device, epoch, fold):
     lc_total_loss = 0
     total_loss = 0
     for batch in tqdm.tqdm(testLoader, desc='Validaing:     ', mininterval=2):
-#         batch_new = batch[:,:-1,:].to(device)
+
         batch_new = torch.cat((batch[:,:,50:100] + batch[:,:,:50],batch[:,:,100:]), dim=2).to(device)
         pred, pred_skill, kc_selecting_mask, attention_weight = model(batch_new)
     
@@ -390,8 +322,7 @@ def test_epoch(model, testLoader, loss_func, device, epoch, fold):
         loss, lc_loss, p, a, lc, kc_mask = loss_func(pred, pred_skill, kc_selecting_mask, batch[:,:,:100], model)
         lc_total_loss += lc_loss
         total_loss += loss
-#         prediction = torch.cat([prediction, torch.tensor([p[-1]], device=device)])
-#         ground_truth = torch.cat([ground_truth, torch.tensor([a[-1]], device=device)])
+
         
         prediction = torch.cat([prediction, p])
         ground_truth = torch.cat([ground_truth, a])
@@ -400,20 +331,17 @@ def test_epoch(model, testLoader, loss_func, device, epoch, fold):
         preds = torch.cat([preds, pred.cpu()])
         lcs.append(lc.cpu().detach().numpy())
         kc_masks.append(kc_mask.cpu().detach().numpy())
-#         if epoch == 39 and fold % 10 == 0:
-#             plot_heatmap(batch, pred, fold, batch_n)
+
         batch_n += 1
         
-#     return performance(ground_truth, prediction, epoch)
+
     print(loss)
     print("LC loss:", lc_total_loss)
     np.save("attention.npy", attention_weights.detach().numpy())
     np.save("lcs"+str(fold)+".npy", lcs)
     np.save("kcs"+str(fold)+".npy", kc_masks)
-#     np.save("kcmask_compare"+str(epoch)+".npy", kc_masks)
+
     torch.save(model.state_dict(), "model"+str(fold)+".pth")
 
     return total_loss, performance_granular(full_data, preds, ground_truth, prediction, epoch)
 
-#     print(ground_truth)
-#     print(prediction)
